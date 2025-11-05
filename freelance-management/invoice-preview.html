@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Preview - Techlead-ANKAN</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .invoice-preview {
+            max-width: 210mm;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 0;
+        }
+        
+        .header {
+            background: #fafbfc;
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #2196F3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #2196F3;
+            font-size: 14px;
+        }
+        
+        .company-info h1 {
+            margin: 0;
+            font-size: 28px;
+            color: #253238;
+            font-weight: bold;
+        }
+        
+        .company-info p {
+            margin: 5px 0;
+            color: #757575;
+            font-size: 12px;
+        }
+        
+        .contact-info {
+            text-align: right;
+            font-size: 10px;
+            color: #757575;
+            line-height: 1.6;
+        }
+        
+        .contact-info .link {
+            color: #2196F3;
+        }
+        
+        .invoice-header {
+            background: #2196F3;
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .invoice-header h2 {
+            margin: 0;
+            font-size: 32px;
+            font-weight: bold;
+        }
+        
+        .invoice-number {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .invoice-content {
+            padding: 20px;
+        }
+        
+        .invoice-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .meta-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 12px;
+            color: #253238;
+            font-weight: bold;
+        }
+        
+        .meta-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 10px;
+        }
+        
+        .meta-item .label {
+            color: #757575;
+        }
+        
+        .meta-item .value {
+            color: #253238;
+            font-weight: 500;
+        }
+        
+        .client-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .client-info h3 {
+            margin: 0 0 8px 0;
+            color: #2196F3;
+            font-size: 12px;
+        }
+        
+        .client-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: #253238;
+            margin-bottom: 5px;
+        }
+        
+        .client-details {
+            font-size: 10px;
+            color: #757575;
+            line-height: 1.4;
+        }
+        
+        .project-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .services-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .services-table th {
+            background: #f0f2f7;
+            padding: 12px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: bold;
+            color: #253238;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .services-table td {
+            padding: 12px;
+            font-size: 10px;
+            color: #253238;
+            border: 1px solid #f0f0f0;
+        }
+        
+        .services-table tbody tr:nth-child(even) {
+            background: #fcfcfc;
+        }
+        
+        .total-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .status-badge {
+            background: #FF9800;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: bold;
+        }
+        
+        .total-amount {
+            background: #2196F3;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .total-amount .label {
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        
+        .total-amount .amount {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .footer-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .footer {
+            background: #fafbfc;
+            padding: 20px;
+            text-align: center;
+            color: #757575;
+            font-size: 10px;
+        }
+        
+        .footer h3 {
+            margin: 0 0 5px 0;
+            color: #2196F3;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-preview">
+        <!-- Header Section -->
+        <div class="header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo">TA</div>
+                    <div class="company-info">
+                        <h1>Techlead-ANKAN</h1>
+                        <p>Professional Web & Tech Solutions</p>
+                    </div>
+                </div>
+                <div class="contact-info">
+                    <div>Contact: +91 8617790081</div>
+                    <div>Email: mr.ankanmaity@gmail.com</div>
+                    <div class="link">Portfolio: techlead-ankan.com</div>
+                    <div class="link">GitHub: github.com/Techlead-ANKAN</div>
+                    <div class="link">LinkedIn: linkedin.com/in/ankan-maity</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Invoice Header -->
+        <div class="invoice-header">
+            <h2>INVOICE</h2>
+            <div class="invoice-number">#INV-847392</div>
+        </div>
+        
+        <!-- Invoice Content -->
+        <div class="invoice-content">
+            <!-- Invoice Meta -->
+            <div class="invoice-meta">
+                <div>
+                    <h3>Invoice Details</h3>
+                    <div class="meta-item">
+                        <span class="label">Issue Date:</span>
+                        <span class="value">21/10/2025</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="label">Due Date:</span>
+                        <span class="value">05/11/2025</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="label">Payment Method:</span>
+                        <span class="value">UPI</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="label">Invoice Type:</span>
+                        <span class="value">FINAL</span>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3>Bill To</h3>
+                    <div class="client-name">John Doe</div>
+                    <div class="client-details">
+                        <div>Doe Enterprises Ltd.</div>
+                        <div>john.doe@example.com</div>
+                        <div>+91 9876543210</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Project Info -->
+            <div class="project-info">
+                <h3 style="color: #2196F3; margin: 0 0 8px 0; font-size: 11px;">Project: E-commerce Website Development</h3>
+                <div style="font-size: 9px; color: #757575;">Duration: 15/09/2025 to 20/10/2025</div>
+            </div>
+            
+            <!-- Services Table -->
+            <table class="services-table">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th style="text-align: center;">Qty</th>
+                        <th style="text-align: right;">Rate</th>
+                        <th style="text-align: right;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Frontend Development (React)</td>
+                        <td style="text-align: center;">1</td>
+                        <td style="text-align: right;">₹15,000.00</td>
+                        <td style="text-align: right; font-weight: bold;">₹15,000.00</td>
+                    </tr>
+                    <tr>
+                        <td>Backend API Development</td>
+                        <td style="text-align: center;">1</td>
+                        <td style="text-align: right;">₹12,000.00</td>
+                        <td style="text-align: right; font-weight: bold;">₹12,000.00</td>
+                    </tr>
+                    <tr>
+                        <td>Database Setup & Integration</td>
+                        <td style="text-align: center;">1</td>
+                        <td style="text-align: right;">₹8,000.00</td>
+                        <td style="text-align: right; font-weight: bold;">₹8,000.00</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <!-- Total Section -->
+            <div class="total-section">
+                <div class="status-badge">STATUS: PENDING</div>
+                <div class="total-amount">
+                    <div class="label">TOTAL AMOUNT</div>
+                    <div class="amount">₹35,000.00</div>
+                </div>
+            </div>
+            
+            <!-- Footer Section -->
+            <div class="footer-section">
+                <div style="margin-bottom: 15px;">
+                    <strong style="color: #253238; font-size: 11px;">Payment Terms:</strong>
+                    <div style="font-size: 10px; color: #757575; margin-top: 5px;">15 days from invoice date</div>
+                </div>
+                
+                <div>
+                    <strong style="color: #253238; font-size: 11px;">Additional Notes:</strong>
+                    <div style="font-size: 10px; color: #757575; margin-top: 5px;">Thank you for choosing Techlead-ANKAN for your project. Please make payment within the specified timeline.</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <h3>Thank you for your business!</h3>
+            <div>Invoice generated on 21/10/2025 | Techlead-ANKAN</div>
+            <div style="margin-top: 10px; border-top: 1px solid #2196F3; padding-top: 10px; width: 200px; margin: 10px auto 0;"></div>
+        </div>
+    </div>
+</body>
+</html>
