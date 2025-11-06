@@ -4,6 +4,7 @@ import {
     HomeIcon, 
     UsersIcon, 
     BriefcaseIcon, 
+    TableCellsIcon,
     CogIcon,
     ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline';
@@ -65,6 +66,7 @@ const Sidebar = ({ currentPage, onPageChange }) => {
         { id: 'dashboard', label: 'Dashboard', icon: HomeIcon },
         { id: 'clients', label: 'Clients', icon: UsersIcon },
         { id: 'projects', label: 'Projects', icon: BriefcaseIcon },
+        { id: 'database', label: 'Database', icon: TableCellsIcon },
         { id: 'settings', label: 'Settings', icon: CogIcon },
     ];
 

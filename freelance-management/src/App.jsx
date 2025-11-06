@@ -7,6 +7,7 @@ import Layout from './components/Layout';
 import DashboardPage from './pages/DashboardPage';
 import ClientsPage from './pages/ClientsPage';
 import ProjectsPage from './pages/ProjectsPage';
+import DatabasePage from './pages/DatabasePage';
 import SettingsPage from './pages/SettingsPage';
 import ClientDetailPage from './pages/ClientDetailPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
@@ -48,6 +49,8 @@ const AppContent = () => {
                 return <ClientsPage onNavigate={handleNavigate} />;
             case 'projects':
                 return <ProjectsPage onNavigate={handleNavigate} params={currentPageParams} onClearParams={clearParams} />;
+            case 'database':
+                return <DatabasePage onNavigate={handleNavigate} />;
             case 'settings':
                 return <SettingsPage />;
             case 'client-detail':
