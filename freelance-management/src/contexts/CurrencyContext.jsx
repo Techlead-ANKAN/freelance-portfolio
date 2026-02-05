@@ -1,8 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// Using only INR currency throughout the website
-const CURRENCY = 'INR';
-const CURRENCY_SYMBOL = '₹';
+// Support multiple currencies
+const DEFAULT_CURRENCY = 'INR';
+const CURRENCY_SYMBOLS = {
+    INR: '₹',
+    USD: '$',
+    EUR: '€',
+    GBP: '£',
+    AED: 'د.إ',
+    KES: 'KSh'
+};
 
 const CurrencyContext = createContext({});
 
@@ -15,40 +22,46 @@ export const useCurrency = () => {
 };
 
 export const CurrencyProvider = ({ children }) => {
-    const currency = CURRENCY;
+    const [currency, setCurrency] = useState(DEFAULT_CURRENCY);
 
-    // No currency conversion needed - everything is in INR
+    // No currency conversion needed in context level
     const convertAmount = (amount) => {
         return parseFloat(amount) || 0;
     };
 
-    // Format amount with INR symbol
-    const formatAmount = (amount, options = {}) => {
+    // Format amount with appropriate currency symbol
+    const formatAmount = (amount, currencyCode = null, options = {}) => {
         const value = parseFloat(amount) || 0;
         const decimals = options.decimals !== undefined ? options.decimals : 2;
+        const currToUse = currencyCode || currency;
+        const symbol = CURRENCY_SYMBOLS[currToUse] || currToUse;
         
-        // For INR, show no decimals for whole numbers
+        // Show no decimals for whole numbers
         const displayDecimals = value % 1 === 0 ? 0 : decimals;
         
-        return `₹${value.toLocaleString('en-IN', {
+        return `${symbol}${value.toLocaleString('en-IN', {
             minimumFractionDigits: displayDecimals,
             maximumFractionDigits: displayDecimals
         })}`;
     };
 
-    // Get currency symbol - always INR
-    const getCurrencySymbol = () => CURRENCY_SYMBOL;
+    // Get currency symbol for specific currency
+    const getCurrencySymbol = (currencyCode = null) => {
+        return CURRENCY_SYMBOLS[currencyCode || currency] || (currencyCode || currency);
+    };
 
-    // Get available currencies - only INR
-    const getAvailableCurrencies = () => [CURRENCY];
+    // Get available currencies
+    const getAvailableCurrencies = () => Object.keys(CURRENCY_SYMBOLS);
 
     const value = {
         currency,
+        setCurrency,
         convertAmount,
         formatAmount,
         getCurrencySymbol,
         getAvailableCurrencies,
-        currencySymbol: CURRENCY_SYMBOL
+        currencySymbols: CURRENCY_SYMBOLS,
+        currencySymbol: CURRENCY_SYMBOLS[currency]
     };
 
     return (

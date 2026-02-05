@@ -11,7 +11,8 @@ import {
     TrashIcon,
     XMarkIcon,
     CurrencyDollarIcon,
-    CalendarDaysIcon
+    CalendarDaysIcon,
+    ArrowsUpDownIcon
 } from '@heroicons/react/24/outline';
 
 const ProjectCard = ({ project, client, onEdit, onView, onDelete, onNavigate }) => {
@@ -76,9 +77,9 @@ const ProjectCard = ({ project, client, onEdit, onView, onDelete, onNavigate }) 
             <div className="space-y-2 text-sm text-gray-600">
                 <div className="flex items-center">
                     <CurrencyDollarIcon className="w-4 h-4 mr-2" />
-                    <span>Total: {formatAmount(project.total_amount || 0)}</span>
+                    <span>Total: {formatAmount(project.total_amount || 0, project.currency || 'INR')}</span>
                     <span className="mx-2">•</span>
-                    <span>Remaining: {formatAmount(project.remaining_amount || 0)}</span>
+                    <span>Remaining: {formatAmount(project.remaining_amount || 0, project.currency || 'INR')}</span>
                 </div>
                 
                 {project.start_date && (
@@ -114,7 +115,7 @@ const ProjectCard = ({ project, client, onEdit, onView, onDelete, onNavigate }) 
 };
 
 const ProjectModal = ({ project, clients, isOpen, onClose, onSave, isLoading }) => {
-    const { getCurrencySymbol, formatAmount } = useCurrency();
+    const { getCurrencySymbol, formatAmount, currencySymbols } = useCurrency();
     const [formData, setFormData] = useState({
         title: '',
         client_id: '',
@@ -123,17 +124,21 @@ const ProjectModal = ({ project, clients, isOpen, onClose, onSave, isLoading }) 
         start_date: '',
         end_date: '',
         status: 'planned',
+        currency: 'INR',
         total_amount: '',
         paid_amount: '',
         remaining_amount: '',
+        actual_received_amount: '',
         notes: '',
         resources: []
     });
     
-    // Simple amount formatting for INR only
-    const showExactAmount = (amount) => {
-        if (!amount) return '₹0';
-        return `₹${parseFloat(amount).toLocaleString('en-IN')}`;
+    // Amount formatting with selected currency
+    const showExactAmount = (amount, curr = null) => {
+        const currencyCode = curr || formData.currency || 'INR';
+        const symbol = currencySymbols[currencyCode] || currencyCode;
+        if (!amount) return `${symbol}0`;
+        return `${symbol}${parseFloat(amount).toLocaleString('en-IN')}`;
     };
 
     const [availableServices] = useState([
@@ -164,9 +169,11 @@ const ProjectModal = ({ project, clients, isOpen, onClose, onSave, isLoading }) 
                 start_date: project.start_date || '',
                 end_date: project.end_date || '',
                 status: project.status || 'planned',
+                currency: project.currency || 'INR',
                 total_amount: project.total_amount || '',
                 paid_amount: project.paid_amount || '',
                 remaining_amount: project.remaining_amount || '',
+                actual_received_amount: project.actual_received_amount || '',
                 notes: project.notes || '',
                 resources: project.resources || []
             });
@@ -184,9 +191,11 @@ const ProjectModal = ({ project, clients, isOpen, onClose, onSave, isLoading }) 
                 start_date: '',
                 end_date: '',
                 status: 'planned',
+                currency: 'INR',
                 total_amount: '',
                 paid_amount: '',
                 remaining_amount: '',
+                actual_received_amount: '',
                 notes: '',
                 resources: []
             });
@@ -206,7 +215,9 @@ const ProjectModal = ({ project, clients, isOpen, onClose, onSave, isLoading }) 
         const dataToSave = {
             ...formData,
             total_amount: parseFloat(formData.total_amount) || 0,
-            paid_amount: parseFloat(formData.paid_amount) || 0
+            paid_amount: parseFloat(formData.paid_amount) || 0,
+            actual_received_amount: parseFloat(formData.actual_received_amount) || null,
+            currency: formData.currency || 'INR'
         };
         
         // Remove remaining_amount since it should be calculated by database
@@ -343,9 +354,24 @@ const ProjectModal = ({ project, clients, isOpen, onClose, onSave, isLoading }) 
 
                         {/* Right Column - Payment & Resources */}
                         <div className="space-y-4">
+                            <div>
+                                <label className="label">Payment Currency *</label>
+                                <select
+                                    value={formData.currency}
+                                    onChange={(e) => setFormData({...formData, currency: e.target.value})}
+                                    className="input"
+                                >
+                                    {Object.entries(currencySymbols).map(([code, symbol]) => (
+                                        <option key={code} value={code}>
+                                            {symbol} {code}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
                             <div className="grid grid-cols-1 gap-4">
                                 <div>
-                                    <label className="label">Total Amount (₹)</label>
+                                    <label className="label">Total Amount ({currencySymbols[formData.currency] || formData.currency})</label>
                                     <input
                                         type="number"
                                         step="0.01"
@@ -357,7 +383,7 @@ const ProjectModal = ({ project, clients, isOpen, onClose, onSave, isLoading }) 
                                 </div>
                                 
                                 <div>
-                                    <label className="label">Paid Amount (₹)</label>
+                                    <label className="label">Paid Amount ({currencySymbols[formData.currency] || formData.currency})</label>
                                     <input
                                         type="number"
                                         step="0.01"
@@ -369,7 +395,25 @@ const ProjectModal = ({ project, clients, isOpen, onClose, onSave, isLoading }) 
                                 </div>
 
                                 <div>
-                                    <label className="label">Remaining Amount (₹) <span className="text-xs text-gray-500">(Auto-calculated)</span></label>
+                                    <label className="label">
+                                        Actual Amount Received After Conversion (₹) 
+                                        <span className="text-xs text-gray-500 ml-1">(Optional - in INR)</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={formData.actual_received_amount}
+                                        onChange={(e) => setFormData({...formData, actual_received_amount: e.target.value})}
+                                        className="input"
+                                        placeholder="Enter actual amount you received in INR"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        If you received payment in foreign currency and converted to INR, enter the actual INR amount you received.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="label">Remaining Amount ({currencySymbols[formData.currency] || formData.currency}) <span className="text-xs text-gray-500">(Auto-calculated)</span></label>
                                     <input
                                         type="number"
                                         step="0.01"
@@ -388,12 +432,18 @@ const ProjectModal = ({ project, clients, isOpen, onClose, onSave, isLoading }) 
                                     <div className="text-sm space-y-1">
                                         <div className="flex justify-between">
                                             <span>Total Amount:</span>
-                                            <span>{showExactAmount(formData.total_amount)}</span>
+                                            <span>{showExactAmount(formData.total_amount, formData.currency)}</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span>Paid Amount:</span>
-                                            <span>{showExactAmount(formData.paid_amount)}</span>
+                                            <span>{showExactAmount(formData.paid_amount, formData.currency)}</span>
                                         </div>
+                                        {formData.actual_received_amount && (
+                                            <div className="flex justify-between text-green-600">
+                                                <span>Actual Received (INR):</span>
+                                                <span>₹{parseFloat(formData.actual_received_amount).toLocaleString('en-IN')}</span>
+                                            </div>
+                                        )}
                                         <div className="flex justify-between">
                                             <span>Paid %:</span>
                                             <span>
@@ -405,7 +455,7 @@ const ProjectModal = ({ project, clients, isOpen, onClose, onSave, isLoading }) 
                                         </div>
                                         <div className="flex justify-between font-medium border-t pt-1 mt-2">
                                             <span>Remaining:</span>
-                                            <span>{showExactAmount(parseFloat(formData.total_amount || 0) - parseFloat(formData.paid_amount || 0))}</span>
+                                            <span>{showExactAmount(parseFloat(formData.total_amount || 0) - parseFloat(formData.paid_amount || 0), formData.currency)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -468,6 +518,7 @@ const ProjectsPage = ({ onNavigate, params = null, onClearParams }) => {
     const [filteredProjects, setFilteredProjects] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [sortBy, setSortBy] = useState('date-desc');
     const [loading, setLoading] = useState(true);
     const [modalLoading, setModalLoading] = useState(false);
 
@@ -488,9 +539,10 @@ const ProjectsPage = ({ onNavigate, params = null, onClearParams }) => {
     }, [params]);
 
     useEffect(() => {
-        // Filter projects based on search term and status
+        // Filter and sort projects
         let filtered = projects;
 
+        // Apply search filter
         if (searchTerm) {
             filtered = filtered.filter(project =>
                 project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -498,12 +550,65 @@ const ProjectsPage = ({ onNavigate, params = null, onClearParams }) => {
             );
         }
 
+        // Apply status filter
         if (statusFilter !== 'all') {
             filtered = filtered.filter(project => project.status === statusFilter);
         }
 
+        // Apply sorting
+        filtered = [...filtered].sort((a, b) => {
+            switch (sortBy) {
+                case 'date-desc':
+                    // Newest first
+                    return new Date(b.created_at || b.start_date || 0) - new Date(a.created_at || a.start_date || 0);
+                
+                case 'date-asc':
+                    // Oldest first
+                    return new Date(a.created_at || a.start_date || 0) - new Date(b.created_at || b.start_date || 0);
+                
+                case 'amount-received-desc':
+                    // Highest received amount first
+                    const aReceived = a.actual_received_amount || a.paid_amount || 0;
+                    const bReceived = b.actual_received_amount || b.paid_amount || 0;
+                    return bReceived - aReceived;
+                
+                case 'amount-received-asc':
+                    // Lowest received amount first
+                    const aReceivedLow = a.actual_received_amount || a.paid_amount || 0;
+                    const bReceivedLow = b.actual_received_amount || b.paid_amount || 0;
+                    return aReceivedLow - bReceivedLow;
+                
+                case 'amount-total-desc':
+                    // Highest total amount first
+                    return (b.total_amount || 0) - (a.total_amount || 0);
+                
+                case 'amount-total-asc':
+                    // Lowest total amount first
+                    return (a.total_amount || 0) - (b.total_amount || 0);
+                
+                case 'remaining-desc':
+                    // Highest remaining first
+                    return (b.remaining_amount || 0) - (a.remaining_amount || 0);
+                
+                case 'remaining-asc':
+                    // Lowest remaining first
+                    return (a.remaining_amount || 0) - (b.remaining_amount || 0);
+                
+                case 'name-asc':
+                    // Alphabetical A-Z
+                    return a.title.localeCompare(b.title);
+                
+                case 'name-desc':
+                    // Alphabetical Z-A
+                    return b.title.localeCompare(a.title);
+                
+                default:
+                    return 0;
+            }
+        });
+
         setFilteredProjects(filtered);
-    }, [projects, searchTerm, statusFilter]);
+    }, [projects, searchTerm, statusFilter, sortBy]);
 
     const loadData = async () => {
         try {
@@ -592,30 +697,67 @@ const ProjectsPage = ({ onNavigate, params = null, onClearParams }) => {
                 </button>
             </div>
 
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative flex-1">
-                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                        type="text"
-                        placeholder="Search projects by title or description..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="input pl-10"
-                    />
+            {/* Filters and Sorting */}
+            <div className="flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="relative flex-1">
+                        <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search projects by title or description..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="input pl-10"
+                        />
+                    </div>
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="input sm:w-48"
+                    >
+                        <option value="all">All Status</option>
+                        <option value="planned">Planned</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="on_hold">On Hold</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                    <div className="relative">
+                        <ArrowsUpDownIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="input pl-10 sm:w-64"
+                        >
+                            <optgroup label="By Date">
+                                <option value="date-desc">Newest First</option>
+                                <option value="date-asc">Oldest First</option>
+                            </optgroup>
+                            <optgroup label="By Amount Received (INR)">
+                                <option value="amount-received-desc">Highest Received</option>
+                                <option value="amount-received-asc">Lowest Received</option>
+                            </optgroup>
+                            <optgroup label="By Total Amount">
+                                <option value="amount-total-desc">Highest Total</option>
+                                <option value="amount-total-asc">Lowest Total</option>
+                            </optgroup>
+                            <optgroup label="By Remaining Amount">
+                                <option value="remaining-desc">Highest Remaining</option>
+                                <option value="remaining-asc">Lowest Remaining</option>
+                            </optgroup>
+                            <optgroup label="By Name">
+                                <option value="name-asc">A to Z</option>
+                                <option value="name-desc">Z to A</option>
+                            </optgroup>
+                        </select>
+                    </div>
                 </div>
-                <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="input sm:w-48"
-                >
-                    <option value="all">All Status</option>
-                    <option value="planned">Planned</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                    <option value="on_hold">On Hold</option>
-                    <option value="cancelled">Cancelled</option>
-                </select>
+                {/* Results count */}
+                {!loading && (
+                    <div className="text-sm text-gray-600">
+                        Showing <span className="font-medium text-black">{filteredProjects.length}</span> of <span className="font-medium text-black">{projects.length}</span> projects
+                    </div>
+                )}
             </div>
 
             {/* Projects Grid */}

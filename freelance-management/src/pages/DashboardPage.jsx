@@ -274,7 +274,7 @@ const RevenueFilter = ({ selectedPeriod, onPeriodChange }) => {
 };
 
 const DashboardPage = ({ onNavigate }) => {
-    const { formatAmount } = useCurrency();
+    const { formatAmount, currencySymbols } = useCurrency();
     const [kpis, setKpis] = useState({
         totalRevenue: 0,
         filteredRevenue: 0,
@@ -310,12 +310,29 @@ const DashboardPage = ({ onNavigate }) => {
             // Store all projects for filtering
             setAllProjects(projects);
 
-            // Calculate KPIs
-            const totalRevenue = projects.reduce((sum, project) => sum + (project.total_amount || 0), 0);
+            // Calculate KPIs using actual_received_amount (in INR) when available
+            // If actual_received_amount is provided, use it; otherwise use paid_amount as received
+            const totalRevenue = projects.reduce((sum, project) => {
+                // Use actual_received_amount if provided, otherwise use paid_amount
+                const received = project.actual_received_amount || project.paid_amount || 0;
+                return sum + received;
+            }, 0);
+            
             const completedProjects = projects.filter(p => p.status === 'completed').length;
             const pendingProjects = projects.filter(p => p.status === 'in_progress' || p.status === 'planned').length;
-            const pendingPaymentsProjects = projects.filter(p => p.remaining_amount > 0);
-            const pendingPaymentsAmount = pendingPaymentsProjects.reduce((sum, p) => sum + p.remaining_amount, 0);
+            
+            // Pending payments: Calculate based on actual amounts
+            const pendingPaymentsProjects = projects.filter(p => {
+                const remaining = (p.total_amount || 0) - (p.paid_amount || 0);
+                return remaining > 0;
+            });
+            
+            const pendingPaymentsAmount = pendingPaymentsProjects.reduce((sum, p) => {
+                // For pending payments, if they have actual_received_amount, calculate remaining based on that
+                // Otherwise use the currency-specific remaining amount
+                const remaining = (p.total_amount || 0) - (p.paid_amount || 0);
+                return sum + remaining;
+            }, 0);
 
             // Get unique active clients (clients with projects)
             const activeClientIds = new Set(projects.map(p => p.client_id));
@@ -360,7 +377,12 @@ const DashboardPage = ({ onNavigate }) => {
             });
         }
 
-        const filteredRevenue = filteredProjects.reduce((sum, project) => sum + (project.total_amount || 0), 0);
+        // Calculate filtered revenue using actual_received_amount (INR) when available
+        const filteredRevenue = filteredProjects.reduce((sum, project) => {
+            // Use actual_received_amount if provided, otherwise use paid_amount
+            const received = project.actual_received_amount || project.paid_amount || 0;
+            return sum + received;
+        }, 0);
         
         setKpis(prevKpis => ({
             ...prevKpis,
@@ -395,13 +417,13 @@ const DashboardPage = ({ onNavigate }) => {
             {/* KPI Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
                 <KPICard
-                    title="Total Revenue (All Time)"
-                    value={formatAmount(kpis.totalRevenue)}
+                    title="Total Revenue Received (INR)"
+                    value={formatAmount(kpis.totalRevenue, 'INR')}
                     icon={CurrencyDollarIcon}
                 />
                 <KPICard
-                    title={`Revenue (${selectedPeriod.month === 'all' ? 'All' : new Date(2024, selectedPeriod.month - 1).toLocaleString('default', { month: 'long' })} ${selectedPeriod.year})`}
-                    value={formatAmount(kpis.filteredRevenue)}
+                    title={`Revenue (${selectedPeriod.month === 'all' ? 'All' : new Date(2024, selectedPeriod.month - 1).toLocaleString('default', { month: 'long' })} ${selectedPeriod.year}) - INR`}
+                    value={formatAmount(kpis.filteredRevenue, 'INR')}
                     icon={CurrencyDollarIcon}
                     color="gray"
                 />
@@ -429,7 +451,7 @@ const DashboardPage = ({ onNavigate }) => {
                 <div className="sm:col-span-2 lg:col-span-1">
                     <KPICard
                         title="Pending Payments"
-                        value={`${kpis.pendingPayments.count} (${formatAmount(kpis.pendingPayments.amount)})`}
+                        value={kpis.pendingPayments.count}
                         icon={CurrencyDollarIcon}
                         color="gray"
                     />

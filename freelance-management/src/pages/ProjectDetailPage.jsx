@@ -309,23 +309,32 @@ const ProjectDetailPage = ({ projectId, onBack, onEdit, onDelete }) => {
                         <div className="card p-6">
                             <h3 className="text-lg font-semibold text-black mb-4 flex items-center">
                                 <CurrencyDollarIcon className="w-5 h-5 mr-2" />
-                                Payment Summary
+                                Payment Summary {project.currency && <span className="text-sm text-gray-500 ml-2">({project.currency})</span>}
                             </h3>
                             
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
                                     <span className="text-gray-600">Total Amount:</span>
                                     <span className="font-semibold text-lg text-black">
-                                        {formatAmount(project.total_amount || 0)}
+                                        {formatAmount(project.total_amount || 0, project.currency || 'INR')}
                                     </span>
                                 </div>
                                 
                                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
                                     <span className="text-gray-600">Amount Paid:</span>
                                     <span className="font-medium text-blue-600">
-                                        {formatAmount(project.paid_amount || 0)}
+                                        {formatAmount(project.paid_amount || 0, project.currency || 'INR')}
                                     </span>
                                 </div>
+                                
+                                {project.actual_received_amount && (
+                                    <div className="flex justify-between items-center py-2 border-b border-gray-100 bg-green-50 px-3 rounded">
+                                        <span className="text-gray-600">Actual Received (INR):</span>
+                                        <span className="font-medium text-green-600">
+                                            ₹{parseFloat(project.actual_received_amount).toLocaleString('en-IN')}
+                                        </span>
+                                    </div>
+                                )}
                                 
                                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
                                     <span className="text-gray-600">Paid Percentage:</span>
@@ -337,7 +346,7 @@ const ProjectDetailPage = ({ projectId, onBack, onEdit, onDelete }) => {
                                 <div className="flex justify-between items-center py-2 bg-gray-50 rounded-lg px-3">
                                     <span className="text-gray-700 font-medium">Remaining Amount:</span>
                                     <span className="font-bold text-lg text-red-600">
-                                        {formatAmount(project.remaining_amount || 0)}
+                                        {formatAmount(project.remaining_amount || 0, project.currency || 'INR')}
                                     </span>
                                 </div>
                             </div>
